@@ -1,38 +1,31 @@
-name: Python package
+name: Git Bisect Workflow
+
 on: [push]
 
 jobs:
-  build:
+  git-bisect:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Nécessaire pour accéder à tout l'historique des commits
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.9"
 
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
 
-      - name: Install packages
-        run: pip install -r requirements.txt
+      - name: Set bad and good hashes
+        run: |
+          echo "BAD_HASH=<bad-hash>" >> $GITHUB_ENV
+          echo "GOOD_HASH=<good-hash>" >> $GITHUB_ENV
+        # Remplacez `<bad-hash>` et `<good-hash>` par les valeurs appropriées.
 
-      - name: Run tests
-        id: tests
-        run: python manage.py test
-        continue-on-error: true
-
-      - name: Finding faulty commit
-        if: steps.tests.outcome == 'failure'
-        env:
-          goodhash: <good-hash>
-          badhash: <bad-hash>
+      - name: Run git bisect with Python script
         run: python myscript.py
