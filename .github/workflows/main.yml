@@ -26,4 +26,13 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run tests
+        id: tests
         run: python manage.py test
+        continue-on-error: true
+
+      - name: Finding faulty commit
+        if: steps.tests.outcome == 'failure'
+        env:
+          goodhash: <good-hash>
+          badhash: <bad-hash>
+        run: python -m pytest
